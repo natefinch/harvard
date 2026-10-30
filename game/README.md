@@ -76,3 +76,38 @@ Outputs in `build/`, with SHA-256 checksums in `build/SHA256SUMS`:
 Players do not need Godot or Python installed. See the
 [repository README](../README.md) for release downloads, install commands, and
 signing limitations.
+
+## Browser build
+
+The **Web** export preset produces a static site suitable for GitHub Pages.
+It uses the Compatibility renderer and disables threads and extensions, so it
+does not require special cross-origin isolation headers. The desktop builds
+are unchanged.
+
+Install Godot 4.7.2's matching Web export templates using **Editor > Manage
+Export Templates**. From the repository root:
+
+```sh
+mkdir -p build/web
+Godot --headless --path game --import
+Godot --headless --path game --export-release Web ../build/web/index.html
+python3 -m http.server 8000 --bind 127.0.0.1 --directory build/web
+```
+
+Open <http://127.0.0.1:8000/>. Serve the whole `build/web/` directory, keeping
+the filenames together; opening `index.html` directly from disk will not work.
+Hosting should use HTTPS and serve `.wasm` files as `application/wasm`.
+
+The browser version requires WebAssembly and WebGL 2.0. Press a key or click
+inside the game to enable audio. Saves and settings stay in that browser's
+site storage, not in an account or the desktop game's save folder. Clearing
+site data removes them; private browsing or blocked storage may prevent
+persistence. This preset does not currently enable installation or offline
+play.
+
+### GitHub Pages
+
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) builds the Web
+preset with Godot 4.7.2 on every push to `main` that changes `game/`, and
+deploys only `build/web/` to <https://natefinch.github.io/harvard/>. Run it
+manually from the **Actions** tab with **Run workflow**.

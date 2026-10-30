@@ -5,6 +5,13 @@ An exploration-and-mystery RPG set in a semi-fictional Harvard, Massachusetts,
 in October 1995. Explore painted town landmarks, follow a missing person's
 trail, and investigate the Hum beneath Bare Hill Pond.
 
+## Play in your browser
+
+**[Play Nowhere Near Cambridge](https://natefinch.github.io/harvard/)** in
+Chrome, Edge, or Firefox, including on Chromebooks. No download or install.
+The first load is about 100 MB. Click the game once to enable sound. Saves and
+settings are stored in that browser; clearing site data removes them.
+
 ## Download and play on macOS
 
 [Download v0.1.1](https://github.com/natefinch/harvard/releases/tag/v0.1.1).
