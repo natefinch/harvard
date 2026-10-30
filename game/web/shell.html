@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<title>$GODOT_PROJECT_NAME</title>
+	$GODOT_HEAD_INCLUDE
+	<style>
+		html, body, #canvas { margin: 0; padding: 0; border: 0; }
+		body { background: #08080d; color: #f3ead4; overflow: hidden; touch-action: none; }
+		#canvas { display: block; outline: none; }
+		[hidden] { display: none !important; }
+		#status, #status-splash { position: absolute; inset: 0; }
+		#status { background: #242424; display: flex; justify-content: center; align-items: center; visibility: hidden; }
+		#status-splash { max-width: 100%; max-height: 100%; margin: auto; }
+		#status-splash.show-image--false { display: none; }
+		#status-splash.fullsize--true { width: 100%; height: 100%; object-fit: contain; }
+		#status-splash.use-filter--false { image-rendering: pixelated; }
+		#status-progress { position: absolute; bottom: 10%; width: 50%; display: none; }
+		#status-notice {
+			display: none; z-index: 1; max-width: 36rem; margin: 2rem; padding: 1rem;
+			border: 1px solid #c48985; border-radius: 0.5rem; background: #3a2028;
+			color: #fff3ef; font: 1rem/1.5 system-ui, sans-serif; text-align: center;
+		}
+		#touch-start, #rotate {
+			position: fixed; inset: 0; z-index: 30; display: grid; place-items: center;
+			padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+				max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+			box-sizing: border-box; text-align: center; font-family: Georgia, serif;
+		}
+		#touch-start { background: rgba(8, 8, 15, 0.56); }
+		#rotate { z-index: 40; background: #11111c; }
+		.mobile-prompt { max-width: 22rem; }
+		.mobile-prompt h1 { margin: 0 0 0.6rem; color: #f5e8c9; font-size: clamp(1.5rem, 5vw, 2rem); }
+		.mobile-prompt p { margin: 0 0 1.25rem; color: #e6decb; font: 1rem/1.45 "Courier New", monospace; font-family: "Courier New", monospace; }
+		.mobile-prompt button {
+			min-height: 48px; padding: 0.65rem 1.4rem; border: 1px solid #ead7ac;
+			border-radius: 0.4rem; background: #201e2b; color: #fff2d6;
+			font: 700 1rem system-ui, sans-serif;
+		}
+		.mobile-prompt button:focus-visible, #touch-controls button:focus-visible { outline: 3px solid #ffe4a0; outline-offset: 3px; }
+		#rotate-symbol { display: block; margin-bottom: 0.7rem; color: #e4c78c; font: 2rem system-ui, sans-serif; }
+		#touch-controls { position: fixed; inset: 0; z-index: 20; pointer-events: none; user-select: none; -webkit-user-select: none; }
+		#touch-controls button, #move-pad { touch-action: none; -webkit-tap-highlight-color: transparent; }
+		#move-pad {
+			position: absolute; left: max(12px, env(safe-area-inset-left));
+			bottom: max(12px, env(safe-area-inset-bottom)); width: clamp(132px, 32vh, 174px);
+			aspect-ratio: 1; pointer-events: auto; border: 2px solid rgba(241, 225, 185, 0.65);
+			border-radius: 50%; background: rgba(15, 15, 27, 0.67); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+		}
+		#move-pad button {
+			position: absolute; width: 34%; height: 34%; padding: 0; border: 0; background: transparent;
+			color: #fff3d4; font: 700 clamp(14px, 2.8vh, 20px) system-ui, sans-serif; pointer-events: none;
+		}
+		#move-up { top: 0; left: 33%; } #move-down { bottom: 0; left: 33%; }
+		#move-left { top: 33%; left: 0; } #move-right { top: 33%; right: 0; }
+		#move-knob {
+			position: absolute; top: 50%; left: 50%; width: 25%; height: 25%; border-radius: 50%;
+			background: #d7c292; border: 2px solid #f4e5c4; box-sizing: border-box;
+			transform: translate(-50%, -50%); pointer-events: none;
+		}
+		.touch-action, #touch-menu {
+			position: absolute; pointer-events: auto; border: 2px solid #e6d4ad;
+			background: rgba(29, 28, 43, 0.86); color: #fff2d4; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+			font-family: system-ui, sans-serif; font-weight: 700;
+		}
+		.touch-action { width: 64px; height: 64px; border-radius: 50%; font-size: 22px; }
+		.touch-action small { display: block; margin-top: -3px; font-size: 9px; letter-spacing: 0.05em; }
+		.touch-action.is-pressed, #touch-menu.is-pressed { background: #8b714d; color: #fff; }
+		#touch-a { right: max(14px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); }
+		#touch-b { right: max(88px, calc(env(safe-area-inset-right) + 74px)); bottom: max(42px, calc(env(safe-area-inset-bottom) + 24px)); }
+		#touch-menu {
+			top: max(12px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right));
+			min-width: 68px; min-height: 48px; border-radius: 0.4rem; font-size: 12px; letter-spacing: 0.06em;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+	<noscript>JavaScript is required to play this game.</noscript>
+	<div id="status">
+		<img id="status-splash" class="$GODOT_SPLASH_CLASSES" src="$GODOT_SPLASH" alt="">
+		<progress id="status-progress" aria-label="Loading game"></progress>
+		<div id="status-notice" role="alert"></div>
+	</div>
+	<div id="touch-start" hidden>
+		<div class="mobile-prompt">
+			<button id="start-game" type="button">Tap to play</button>
+			<p>Sound starts when you tap.</p>
+		</div>
+	</div>
+	<div id="rotate" hidden>
+		<div class="mobile-prompt">
+			<span id="rotate-symbol" aria-hidden="true">&#8635;</span>
+			<h1>Turn your phone sideways</h1>
+			<p>Landscape gives you more room to explore.</p>
+			<button id="portrait-anyway" type="button">Play in portrait</button>
+		</div>
+	</div>
+	<div id="touch-controls" hidden>
+		<div id="move-pad" aria-label="Movement controls">
+			<button id="move-up" type="button" aria-label="Move up">&#9650;</button>
+			<button id="move-left" type="button" aria-label="Move left">&#9664;</button>
+			<span id="move-knob" aria-hidden="true"></span>
+			<button id="move-right" type="button" aria-label="Move right">&#9654;</button>
+			<button id="move-down" type="button" aria-label="Move down">&#9660;</button>
+		</div>
+		<button id="touch-menu" type="button" aria-label="Open menu">MENU</button>
+		<button id="touch-b" class="touch-action" type="button" aria-label="Back or cancel">B<small>BACK</small></button>
+		<button id="touch-a" class="touch-action" type="button" aria-label="Talk, examine or confirm">A<small>OK</small></button>
+	</div>
+	<script src="$GODOT_URL"></script>
+	<script>
+	const GODOT_CONFIG = $GODOT_CONFIG;
+	const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+	const MOBILE_PACK_BYTES = Number("__NNC_MOBILE_PACK_BYTES__") || 0;
+	const canvas = document.getElementById("canvas");
+	const statusOverlay = document.getElementById("status");
+	const statusProgress = document.getElementById("status-progress");
+	const statusNotice = document.getElementById("status-notice");
+	const startOverlay = document.getElementById("touch-start");
+	const rotateOverlay = document.getElementById("rotate");
+	const controls = document.getElementById("touch-controls");
+	const pad = document.getElementById("move-pad");
+	const knob = document.getElementById("move-knob");
+	const menu = document.getElementById("touch-menu");
+	const actionA = document.getElementById("touch-a");
+	const actionB = document.getElementById("touch-b");
+	const portrait = matchMedia("(orientation: portrait)");
+	window.nncTouch = navigator.maxTouchPoints > 0 || matchMedia("(pointer: coarse)").matches;
+
+	let started = false;
+	let portraitDismissed = false;
+	let gameState = "title";
+	let padPointer = null;
+	let padKeys = new Set();
+	const heldKeys = new Map();
+	const keys = {
+		up: { key: "ArrowUp", code: "ArrowUp" },
+		down: { key: "ArrowDown", code: "ArrowDown" },
+		left: { key: "ArrowLeft", code: "ArrowLeft" },
+		right: { key: "ArrowRight", code: "ArrowRight" },
+		accept: { key: "z", code: "KeyZ" },
+		cancel: { key: "x", code: "KeyX" },
+		menu: { key: "m", code: "KeyM" },
+		wake: { key: "Shift", code: "ShiftLeft" },
+	};
+
+	function keyEvent(name, pressed) {
+		const key = keys[name];
+		canvas.dispatchEvent(new KeyboardEvent(pressed ? "keydown" : "keyup", {
+			key: key.key, code: key.code, bubbles: true, cancelable: true,
+		}));
+	}
+
+	function setKey(owner, name, pressed) {
+		const owners = heldKeys.get(name) || new Set();
+		const wasHeld = owners.size > 0;
+		if (pressed) owners.add(owner);
+		else owners.delete(owner);
+		if (owners.size) heldKeys.set(name, owners);
+		else heldKeys.delete(name);
+		if (wasHeld !== (owners.size > 0)) keyEvent(name, owners.size > 0);
+	}
+
+	function releaseAll() {
+		for (const name of heldKeys.keys()) keyEvent(name, false);
+		heldKeys.clear();
+		padKeys = new Set();
+		padPointer = null;
+		knob.style.transform = "translate(-50%, -50%)";
+		for (const button of [menu, actionA, actionB]) button.classList.remove("is-pressed");
+	}
+
+	function updateControls() {
+		const rotate = started && portrait.matches && !portraitDismissed;
+		rotateOverlay.hidden = !rotate;
+		controls.hidden = !window.nncTouch || !started || rotate;
+		pad.hidden = gameState !== "field";
+		menu.hidden = gameState !== "field";
+		actionA.hidden = gameState === "title";
+		actionB.hidden = gameState === "title";
+	}
+
+	window.nncSetGameState = function (state) {
+		if (state !== gameState) releaseAll();
+		gameState = state;
+		updateControls();
+	};
+
+	function updatePad(event) {
+		const rect = pad.getBoundingClientRect();
+		const radius = rect.width / 2;
+		const x = Math.max(-1, Math.min(1, (event.clientX - rect.left - radius) / radius));
+		const y = Math.max(-1, Math.min(1, (event.clientY - rect.top - radius) / radius));
+		const next = new Set();
+		if (x < -0.3) next.add("left");
+		if (x > 0.3) next.add("right");
+		if (y < -0.3) next.add("up");
+		if (y > 0.3) next.add("down");
+		for (const name of padKeys) if (!next.has(name)) setKey("pad", name, false);
+		for (const name of next) if (!padKeys.has(name)) setKey("pad", name, true);
+		padKeys = next;
+		knob.style.transform = `translate(-50%, -50%) translate(${x * radius * 0.42}px, ${y * radius * 0.42}px)`;
+	}
+
+	pad.addEventListener("pointerdown", (event) => {
+		if (padPointer !== null || event.button !== 0) return;
+		event.preventDefault();
+		canvas.focus({ preventScroll: true });
+		padPointer = event.pointerId;
+		pad.setPointerCapture(event.pointerId);
+		updatePad(event);
+	});
+	pad.addEventListener("pointermove", (event) => {
+		if (event.pointerId === padPointer) updatePad(event);
+	});
+	function endPad(event) {
+		if (event.pointerId !== padPointer) return;
+		for (const name of padKeys) setKey("pad", name, false);
+		padKeys = new Set();
+		padPointer = null;
+		knob.style.transform = "translate(-50%, -50%)";
+	}
+	for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) pad.addEventListener(type, endPad);
+
+	function bindAction(button, name) {
+		const pointers = new Set();
+		button.addEventListener("pointerdown", (event) => {
+			if (event.button !== 0) return;
+			event.preventDefault();
+			canvas.focus({ preventScroll: true });
+			button.setPointerCapture(event.pointerId);
+			pointers.add(event.pointerId);
+			button.classList.add("is-pressed");
+			setKey(`${name}-${event.pointerId}`, name, true);
+		});
+		function release(event) {
+			if (!pointers.delete(event.pointerId)) return;
+			setKey(`${name}-${event.pointerId}`, name, false);
+			if (!pointers.size) button.classList.remove("is-pressed");
+		}
+		for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) button.addEventListener(type, release);
+		button.addEventListener("click", (event) => {
+			if (event.detail !== 0) return;
+			const owner = `accessible-${name}`;
+			setKey(owner, name, true);
+			setTimeout(() => setKey(owner, name, false), 80);
+		});
+	}
+	bindAction(actionA, "accept");
+	bindAction(actionB, "cancel");
+	bindAction(menu, "menu");
+	for (const name of ["up", "down", "left", "right"]) {
+		document.getElementById(`move-${name}`).addEventListener("click", (event) => {
+			if (event.detail !== 0) return;
+			const owner = `accessible-${name}`;
+			setKey(owner, name, true);
+			setTimeout(() => setKey(owner, name, false), 80);
+		});
+	}
+
+	document.getElementById("start-game").addEventListener("click", () => {
+		canvas.focus({ preventScroll: true });
+		keyEvent("wake", true);
+		keyEvent("wake", false);
+		if (document.documentElement.requestFullscreen) {
+			document.documentElement.requestFullscreen().catch((error) => console.warn("Fullscreen is unavailable:", error));
+		}
+		started = true;
+		startOverlay.hidden = true;
+		updateControls();
+	});
+	document.getElementById("portrait-anyway").addEventListener("click", () => {
+		portraitDismissed = true;
+		canvas.focus({ preventScroll: true });
+		updateControls();
+	});
+	portrait.addEventListener("change", () => {
+		portraitDismissed = false;
+		releaseAll();
+		updateControls();
+	});
+	window.addEventListener("blur", releaseAll);
+	document.addEventListener("visibilitychange", () => {
+		if (document.hidden) releaseAll();
+	});
+
+	function displayFailure(error) {
+		console.error(error);
+		statusNotice.textContent = `The game could not start: ${error.message || error}. Try a current browser with WebGL 2 enabled.`;
+		statusOverlay.style.visibility = "visible";
+		statusProgress.style.display = "none";
+		statusNotice.style.display = "block";
+	}
+
+	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+	if (missing.length) {
+		displayFailure(new Error(missing.join("; ")));
+	} else {
+		const compactScreen = Math.max(screen.width, screen.height) <= 1366;
+		const useMobilePack = window.nncTouch && matchMedia("(pointer: coarse)").matches && compactScreen && MOBILE_PACK_BYTES > 0;
+		const pack = useMobilePack ? `${GODOT_CONFIG.executable}-mobile.pck` : `${GODOT_CONFIG.executable}.pck`;
+		if (useMobilePack) GODOT_CONFIG.fileSizes[pack] = MOBILE_PACK_BYTES;
+		const engine = new Engine(GODOT_CONFIG);
+		statusOverlay.style.visibility = "visible";
+		statusProgress.style.display = "block";
+		engine.startGame({
+			mainPack: pack,
+			onProgress(current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+				} else {
+					statusProgress.removeAttribute("value");
+				}
+			},
+		}).then(() => {
+			statusOverlay.remove();
+			if (window.nncTouch) startOverlay.hidden = false;
+		}, displayFailure);
+	}
+	</script>
+</body>
+</html>

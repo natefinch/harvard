@@ -83,6 +83,10 @@ func _go() -> void:
 		mash = false
 		add_child(load("res://scripts/AudioSettingsTest.gd").new())
 		return
+	if OS.get_cmdline_user_args().has("touch"):
+		mash = false
+		add_child(load("res://scripts/MobileControlsTest.gd").new())
+		return
 	Story.quiet = true
 	for f in ["intro_done", "met_chief", "lane_done", "crypt_done"]:
 		Game.setf(f)

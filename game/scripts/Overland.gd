@@ -33,6 +33,7 @@ func _ready() -> void:
 	size = Vector2(meta.size[0], meta.size[1])
 	map = Sprite2D.new()
 	map.texture = load("res://assets/map/overland.png")
+	map.scale = size / map.texture.get_size()
 	map.centered = false
 	map.z_index = -10
 	add_child(map)
@@ -158,7 +159,8 @@ func _update_near() -> void:
 		prompt.text = ""
 	else:
 		var info: Dictionary = Data.LANDMARKS.get(near, {})
-		prompt.text = ("Z: Go to " if info.has("loc") else "Z: Look at ") + info.get("name", near)
+		var key := "A" if UI.touch_ui else "Z"
+		prompt.text = (key + ": Go to " if info.has("loc") else key + ": Look at ") + info.get("name", near)
 
 
 func _enter(k: String) -> void:

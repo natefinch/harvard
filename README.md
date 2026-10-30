@@ -8,9 +8,20 @@ trail, and investigate the Hum beneath Bare Hill Pond.
 ## Play in your browser
 
 **[Play Nowhere Near Cambridge](https://natefinch.github.io/harvard/)** in
-Chrome, Edge, or Firefox, including on Chromebooks. No download or install.
-The first load is about 100 MB. Click the game once to enable sound. Saves and
-settings are stored in that browser; clearing site data removes them.
+modern browsers with WebGL 2, including on Chromebooks, iPhones/iPads, and
+Android devices. No install needed. On a phone, turn it sideways and tap
+**Tap to play** to enable sound. Fullscreen starts where the browser supports
+it; the game also works without fullscreen.
+
+Touch controls appear automatically: drag the pad to move, use **A** to talk,
+examine, or confirm, **B** to go back, and **MENU** for your journal and items.
+You can also tap menu entries and dialogue, and drag the Settings sliders.
+
+The first load is roughly **64 MB on phones/tablets** or **101 MB on desktop**,
+before HTTP compression and browser caching. Smaller touch devices download
+a separate optimized art pack; **desktop artwork stays at its original
+resolution and quality**. Saves and settings are stored in that browser;
+clearing site data removes them.
 
 ## Download and play on macOS
 

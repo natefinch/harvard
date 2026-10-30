@@ -20,6 +20,12 @@ A Godot 4 exploration/mystery RPG set in a semi-fictional Harvard, Massachusetts
 | F3 | Debug overlay (walk areas, exits, hotspots) |
 | F12 | Screenshot to `user://` |
 
+In a touch-enabled browser, use the on-screen movement pad, **A** (confirm/
+interact), **B** (cancel), and **MENU**. Menu entries and dialogue accept taps.
+Long menus scroll with a swipe. Landscape is recommended; the portrait prompt
+also offers **Play in portrait**. Fullscreen is requested on the initial
+**Tap to play** gesture where supported, but is not required.
+
 Save at the payphone on the Common or the farmhouse door.
 
 Choose **Settings** on the title screen or in the in-game menu (Esc/Tab/M) to
@@ -39,6 +45,8 @@ Godot --path game --headless -- --test
 # Audio settings, menu navigation, mouse controls, and persistence
 # Use a temporary HOME so this test cannot overwrite your own audio settings.
 HOME="$(mktemp -d)" Godot --path game --headless -- --test audio
+# Touch menu selection, disabled entries, dialogue, settings, scrolling, map scale
+HOME="$(mktemp -d)" Godot --path game --headless -- --test touch --touch-ui
 # Windowed screenshots of every location to /tmp/shots (add `dbg` for overlays, `title` for title screen)
 Godot --path game -- --shots
 ```
@@ -92,9 +100,8 @@ Install Godot 4.7.2's matching Web export templates using **Editor > Manage
 Export Templates**. From the repository root:
 
 ```sh
-mkdir -p build/web
-Godot --headless --path game --import
-Godot --headless --path game --export-release Web ../build/web/index.html
+GODOT_BIN=/Applications/Godot.app/Contents/MacOS/Godot \
+  bash game-art/tools/build-web.sh
 python3 -m http.server 8000 --bind 127.0.0.1 --directory build/web
 ```
 
@@ -103,15 +110,34 @@ the filenames together; opening `index.html` directly from disk will not work.
 Hosting should use HTTPS and serve `.wasm` files as `application/wasm`.
 
 The browser version requires WebAssembly and WebGL 2.0. Press a key or click
-inside the game to enable audio. Saves and settings stay in that browser's
+inside the game to enable audio; touch devices show **Tap to play** to unlock
+sound and request fullscreen. iOS browsers may remain windowed. Saves and settings stay in that browser's
 site storage, not in an account or the desktop game's save folder. Clearing
 site data removes them; private browsing or blocked storage may prevent
 persistence. This preset does not currently enable installation or offline
 play.
 
+The build script requires Python 3 and `rsync`, in addition to Godot and its
+Web template. It exports the original desktop pack as `index.pck`, then builds
+`index-mobile.pck` from an isolated temporary project copy. That copy uses
+high-quality lossy texture imports for backgrounds/title art and a 2048-pixel
+map; the source PNGs and desktop imports are never modified. The browser only
+downloads one pack: compact, coarse-pointer touch screens use the mobile pack,
+while desktop and large screens retain the original artwork. Music is already
+Ogg-compressed and is left unchanged. Unused raw art is excluded from both
+web packs. Current payloads are approximately 64 MB mobile / 101 MB desktop
+including the shared engine, before HTTP compression and caching.
+
+The custom shell in `web/shell.html` provides multi-touch movement and action
+buttons, releases held inputs on cancellation/focus loss, respects safe-area
+insets, and recommends landscape. It forwards the existing keyboard inputs;
+the same game logic runs on all platforms. Web builds omit the title-screen
+Quit option because a page cannot close its own browser tab.
+
 ### GitHub Pages
 
 [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) builds the Web
-preset with Godot 4.7.2 on every push to `main` that changes `game/`, and
+preset and both art packs with Godot 4.7.2 on every push to `main` that changes
+`game/` or the web build tools, and
 deploys only `build/web/` to <https://natefinch.github.io/harvard/>. Run it
 manually from the **Actions** tab with **Run workflow**.

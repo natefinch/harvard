@@ -15,12 +15,18 @@ var toast_box: VBoxContainer
 
 var _dialog := false
 var _menu := false
+var _settings_active := false
 var _portraits := {}
+var touch_ui := false
+var _touch_state := ""
 
 
 func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	touch_ui = OS.get_cmdline_user_args().has("--touch-ui")
+	if OS.has_feature("web"):
+		touch_ui = bool(JavaScriptBridge.eval("Boolean(window.nncTouch)", true))
 	f_body = load("res://assets/fonts/CourierPrime-Bold.ttf")
 	f_title = load("res://assets/fonts/IMFellEnglishSC-Regular.ttf")
 	f_type = load("res://assets/fonts/SpecialElite-Regular.ttf")
@@ -47,9 +53,28 @@ func _ready() -> void:
 
 
 func _process(_d: float) -> void:
+	if touch_ui and OS.has_feature("web"):
+		var field: bool = Game.main != null and Game.main.world != null and Game.main.world.has_method("is_field")
+		var state := "title"
+		if field and not Game.busy():
+			state = "field"
+		elif field or Game.battling or _dialog or _menu or _settings_active:
+			state = "modal"
+		if state != _touch_state:
+			_touch_state = state
+			JavaScriptBridge.eval("window.nncSetGameState('%s')" % state, true)
 	if Input.is_action_just_pressed("menu") and not Game.busy() and Game.main and Game.main.world \
 			and Game.main.world.has_method("is_field"):
 		field_menu()
+
+
+func touch_row_height() -> float:
+	var scale_factor := 0.5
+	if OS.has_feature("web"):
+		var result: Variant = JavaScriptBridge.eval("Math.min(window.innerWidth / 1280, window.innerHeight / 720)", true)
+		if (typeof(result) == TYPE_FLOAT or typeof(result) == TYPE_INT) and result > 0:
+			scale_factor = float(result)
+	return clampf(ceilf(48.0 / scale_factor), 72.0, 120.0)
 
 
 func is_busy() -> bool:
@@ -96,6 +121,7 @@ func _build_hud() -> void:
 	hud_info.add_theme_constant_override("outline_size", 6)
 	hud.add_child(hud_info)
 	var hint := label("Z/Enter: talk · Tab: menu", f_hud, 18, Color(1, 1, 1, 0.6))
+	hint.visible = not touch_ui
 	hint.position = Vector2(16, 690)
 	hint.add_theme_color_override("font_outline_color", Color.BLACK)
 	hint.add_theme_constant_override("outline_size", 5)
@@ -163,21 +189,40 @@ func wait_accept() -> void:
 		await get_tree().process_frame
 
 
+func _tap_to_accept(event: InputEvent) -> void:
+	if not touch_ui or not event is InputEventMouseButton or event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
+		return
+	get_viewport().set_input_as_handled()
+	var action := InputEventAction.new()
+	action.action = "accept"
+	action.pressed = true
+	Input.parse_input_event(action)
+	await get_tree().process_frame
+	action = InputEventAction.new()
+	action.action = "accept"
+	action.pressed = false
+	Input.parse_input_event(action)
+
+
 func card(title: String, body := "", wait := true) -> void:
 	_dialog = true
 	var c := ColorRect.new()
 	c.color = Color(0.02, 0.02, 0.04)
 	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	if wait and touch_ui:
+		c.gui_input.connect(_tap_to_accept)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_theme_constant_override("separation", 24)
+	if touch_ui:
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.add_child(v)
 	var t := label(title, f_title, 46, Color(0.95, 0.88, 0.7))
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	if body != "":
-		var b := label(body, f_type, 24)
+		var b := label(body, f_type, 30 if touch_ui else 24)
 		b.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.custom_minimum_size.x = 900
@@ -212,8 +257,10 @@ func portrait(id: String) -> Texture2D:
 func _dialog_box(id: String) -> Array:
 	var box := PanelContainer.new()
 	box.add_theme_stylebox_override("panel", box_style())
-	box.position = Vector2(40, 500)
-	box.size = Vector2(1200, 196)
+	box.position = Vector2(40, 410) if touch_ui else Vector2(40, 500)
+	box.size = Vector2(1000, 286) if touch_ui else Vector2(1200, 196)
+	if touch_ui:
+		box.gui_input.connect(_tap_to_accept)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 18)
 	box.add_child(h)
@@ -223,22 +270,24 @@ func _dialog_box(id: String) -> Array:
 		pr.texture = tex
 		pr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		pr.custom_minimum_size = Vector2(190, 166)
+		pr.custom_minimum_size = Vector2(150, 210) if touch_ui else Vector2(190, 166)
 		h.add_child(pr)
 	var v := VBoxContainer.new()
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
 	if id != "":
-		v.add_child(label(Data.NAMES.get(id, id.capitalize()), f_type, 24, Color(1, 0.85, 0.5)))
+		v.add_child(label(Data.NAMES.get(id, id.capitalize()), f_type, 30 if touch_ui else 24, Color(1, 0.85, 0.5)))
 	var rt := RichTextLabel.new()
 	rt.bbcode_enabled = true
 	rt.fit_content = true
 	rt.scroll_active = false
+	if touch_ui:
+		rt.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rt.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	rt.add_theme_font_override("normal_font", f_body)
 	rt.add_theme_font_override("italics_font", f_old)
-	rt.add_theme_font_size_override("normal_font_size", 23)
-	rt.add_theme_font_size_override("italics_font_size", 25)
+	rt.add_theme_font_size_override("normal_font_size", 30 if touch_ui else 23)
+	rt.add_theme_font_size_override("italics_font_size", 31 if touch_ui else 25)
 	rt.add_theme_color_override("default_color", Color(0.95, 0.94, 0.9))
 	v.add_child(rt)
 	root.add_child(box)
@@ -271,7 +320,7 @@ func say(id: String, text: String) -> void:
 		rt.visible_characters = int(shown)
 	rt.visible_characters = -1
 	var arrow := label("▼", f_body, 20, Color(1, 0.9, 0.6))
-	arrow.position = Vector2(1160, 160)
+	arrow.position = Vector2(960, 250) if touch_ui else Vector2(1160, 160)
 	box.add_child(arrow)
 	await wait_accept()
 	box.queue_free()
@@ -292,7 +341,11 @@ func choose(prompt_id: String, prompt: String, opts: Array, can_cancel := false)
 		box = parts[0]
 		parts[1].text = prompt
 	var lb := ListBox.new(opts, can_cancel)
-	lb.position = Vector2(860, 480 - 46 * opts.size()) if box else Vector2(860, 300)
+	if touch_ui and box:
+		var list_height := minf(400.0, (touch_row_height() + 2.0) * opts.size()) + 28.0
+		lb.position = Vector2(860, maxf(0.0, 400.0 - list_height))
+	else:
+		lb.position = Vector2(860, 480 - 46 * opts.size()) if box else Vector2(860, 300)
 	root.add_child(lb)
 	var r: int = await lb.run()
 	lb.queue_free()
@@ -320,9 +373,9 @@ func _side_panel(pos: Vector2, size: Vector2) -> Array:
 	rt.add_theme_font_override("normal_font", f_body)
 	rt.add_theme_font_override("bold_font", f_type)
 	rt.add_theme_font_override("italics_font", f_old)
-	rt.add_theme_font_size_override("normal_font_size", 20)
-	rt.add_theme_font_size_override("bold_font_size", 22)
-	rt.add_theme_font_size_override("italics_font_size", 22)
+	rt.add_theme_font_size_override("normal_font_size", 27 if touch_ui else 20)
+	rt.add_theme_font_size_override("bold_font_size", 29 if touch_ui else 22)
+	rt.add_theme_font_size_override("italics_font_size", 29 if touch_ui else 22)
 	p.add_child(rt)
 	root.add_child(p)
 	return [p, rt]
@@ -336,7 +389,7 @@ func field_menu() -> void:
 		var lb := ListBox.new(["Goods", "Status", "Journal", "Settings", "Quit Game"])
 		lb.position = Vector2(40, 50)
 		root.add_child(lb)
-		var money := _side_panel(Vector2(40, 280), Vector2(190, 60))
+		var money := _side_panel(Vector2(500, 50) if touch_ui else Vector2(40, 280), Vector2(240, 70) if touch_ui else Vector2(190, 60))
 		money[1].text = "Cash: $%d" % Game.money
 		var r: int = await lb.run()
 		lb.queue_free()
@@ -362,10 +415,12 @@ func field_menu() -> void:
 
 
 func settings_menu() -> void:
+	_settings_active = true
 	var panel := SettingsMenu.new()
 	root.add_child(panel)
 	await panel.run()
 	panel.queue_free()
+	_settings_active = false
 	if Audio.save_settings() != OK:
 		toast("Couldn't save audio settings. Check available disk space and folder permissions.")
 	Game.cooldown = 0.2
@@ -561,7 +616,9 @@ func title_screen() -> void:
 	var opts := ["New Game"]
 	if Game.has_save():
 		opts.insert(0, "Continue")
-	opts.append_array(["Settings", "Quit"])
+	opts.append("Settings")
+	if not OS.has_feature("web"):
+		opts.append("Quit")
 	var pick := ""
 	while true:
 		var lb := ListBox.new(opts, false)

@@ -121,7 +121,10 @@ func intro() -> void:
 	])
 	Game.setf("intro_done")
 	Game.set_objective("Ask about Rowan on Harvard Common (head out the drive, then northwest).")
-	UI.toast("Tip: walk off the edge of the farm to reach the town map. Z/Enter interacts. Tab opens the menu.")
+	if UI.touch_ui:
+		UI.toast("Tip: walk off the farm to reach the town map. A interacts. MENU opens your journal and items.")
+	else:
+		UI.toast("Tip: walk off the edge of the farm to reach the town map. Z/Enter interacts. Tab opens the menu.")
 	Game.cutscene -= 1
 
 

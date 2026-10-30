@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "game/**"
+      - "game-art/tools/build-web.sh"
+      - "game-art/tools/prepare-web-mobile.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -56,12 +58,10 @@ jobs:
       - name: Export Web build
         run: |
           set -euo pipefail
-          mkdir -p build/web
-          ~/godot/godot --headless --path game --import
-          ~/godot/godot --headless --path game --export-release Web ../build/web/index.html
+          GODOT_BIN="$HOME/godot/godot" bash game-art/tools/build-web.sh
           test -s build/web/index.wasm
           test -s build/web/index.pck
-          touch build/web/.nojekyll
+          test -s build/web/index-mobile.pck
 
       - uses: actions/configure-pages@v6
 
