@@ -8,7 +8,7 @@ trail, and investigate the Hum beneath Bare Hill Pond.
 
 [Download v0.1.1](https://github.com/natefinch/harvard/releases/tag/v0.1.1).
 One ZIP contains a standalone app for both Apple Silicon and Intel Macs.
-No Godot or Python installation is needed. Requires macOS 13 or later on
+Requires macOS 13 or later on
 Apple Silicon, or macOS 11 or later on Intel.
 
 Paste this into Terminal from any directory. It downloads the ZIP to
@@ -30,24 +30,13 @@ launches it:
 )
 ```
 
-The surrounding parentheses keep your Terminal in its current directory.
-
-Command-line `curl` normally does not attach the quarantine metadata that
-browsers add to downloaded files. However, **this build is ad-hoc signed, not
-Developer ID signed or Apple-notarized**. Downloading with `curl` does not
-change its signing status, and macOS security policies may still block it.
-Only run software you trust.
-
 ## Download and play on Windows
 
 [Download Nowhere-Near-Cambridge-Windows-x86_64.zip](https://github.com/natefinch/harvard/releases/download/v0.1.1/Nowhere-Near-Cambridge-Windows-x86_64.zip)
 (v0.1.1, 64-bit x86_64/amd64 Windows). Extract the ZIP and run
-`Nowhere Near Cambridge.exe`; it is a single standalone EXE and needs no Godot
-installation. Checksums are in
+`Nowhere Near Cambridge.exe`. Checksums are in
 [SHA256SUMS](https://github.com/natefinch/harvard/releases/download/v0.1.1/SHA256SUMS).
 
-**The Windows build is not code-signed.** Windows SmartScreen or antivirus
-software may warn about or block it. Only run software you trust.
 
 ## Controls
 
