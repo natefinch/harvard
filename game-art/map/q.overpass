@@ -1,0 +1,16 @@
+[out:json][timeout:180];
+(
+  relation["boundary"="administrative"]["name"="Harvard"]["admin_level"="8"](42.40,-71.70,42.62,-71.50);
+)->.town;
+.town out geom;
+(
+  way["highway"~"motorway|trunk|primary|secondary|tertiary|unclassified|residential|track"](42.45,-71.67,42.59,-71.53);
+  way["natural"~"water|wood|wetland|scrub"](42.45,-71.67,42.59,-71.53);
+  relation["natural"~"water|wood|wetland"](42.45,-71.67,42.59,-71.53);
+  way["landuse"~"forest|farmland|orchard|meadow|cemetery|grass|military|residential"](42.45,-71.67,42.59,-71.53);
+  relation["landuse"~"forest|farmland|orchard|meadow|military"](42.45,-71.67,42.59,-71.53);
+  way["waterway"~"river|stream"](42.45,-71.67,42.59,-71.53);
+  way["railway"="rail"](42.45,-71.67,42.59,-71.53);
+  way["leisure"~"golf_course|park|nature_reserve"](42.45,-71.67,42.59,-71.53);
+);
+out geom;
