@@ -333,10 +333,10 @@ func field_menu() -> void:
 	get_tree().paused = true
 	Audio.sfx("select")
 	while true:
-		var lb := ListBox.new(["Goods", "Status", "Journal", "Quit Game"])
+		var lb := ListBox.new(["Goods", "Status", "Journal", "Settings", "Quit Game"])
 		lb.position = Vector2(40, 50)
 		root.add_child(lb)
-		var money := _side_panel(Vector2(40, 240), Vector2(190, 60))
+		var money := _side_panel(Vector2(40, 280), Vector2(190, 60))
 		money[1].text = "Cash: $%d" % Game.money
 		var r: int = await lb.run()
 		lb.queue_free()
@@ -345,7 +345,8 @@ func field_menu() -> void:
 			0: await goods_menu()
 			1: await status_screen()
 			2: await journal_screen()
-			3:
+			3: await settings_menu()
+			4:
 				get_tree().paused = false
 				_menu = false
 				if await confirm("", "Quit to the title screen? (Unsaved progress will be lost. Save at a payphone.)"):
@@ -357,6 +358,16 @@ func field_menu() -> void:
 			_: break
 	get_tree().paused = false
 	_menu = false
+	Game.cooldown = 0.2
+
+
+func settings_menu() -> void:
+	var panel := SettingsMenu.new()
+	root.add_child(panel)
+	await panel.run()
+	panel.queue_free()
+	if Audio.save_settings() != OK:
+		toast("Couldn't save audio settings. Check available disk space and folder permissions.")
 	Game.cooldown = 0.2
 
 
@@ -550,13 +561,19 @@ func title_screen() -> void:
 	var opts := ["New Game"]
 	if Game.has_save():
 		opts.insert(0, "Continue")
-	opts.append("Quit")
-	var lb := ListBox.new(opts, false)
-	lb.position = Vector2(540, 470)
-	lb.custom_minimum_size.x = 200
-	t.add_child(lb)
-	var r: int = await lb.run()
-	var pick: String = opts[r]
+	opts.append_array(["Settings", "Quit"])
+	var pick := ""
+	while true:
+		var lb := ListBox.new(opts, false)
+		lb.position = Vector2(540, 470)
+		lb.custom_minimum_size.x = 200
+		t.add_child(lb)
+		var r: int = await lb.run()
+		pick = opts[r]
+		lb.queue_free()
+		if pick != "Settings":
+			break
+		await settings_menu()
 	await fade_out(0.6)
 	t.queue_free()
 	match pick:

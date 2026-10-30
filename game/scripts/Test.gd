@@ -79,6 +79,10 @@ func ev(loc: String, spawn: String, name: String) -> void:
 
 
 func _go() -> void:
+	if OS.get_cmdline_user_args().has("audio"):
+		mash = false
+		add_child(load("res://scripts/AudioSettingsTest.gd").new())
+		return
 	Story.quiet = true
 	for f in ["intro_done", "met_chief", "lane_done", "crypt_done"]:
 		Game.setf(f)

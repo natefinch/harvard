@@ -22,6 +22,13 @@ A Godot 4 exploration/mystery RPG set in a semi-fictional Harvard, Massachusetts
 
 Save at the payphone on the Common or the farmhouse door.
 
+Choose **Settings** on the title screen or in the in-game menu (Esc/Tab/M) to
+adjust music and sound-effect volume separately. Each has a mute toggle that
+preserves its slider value. Use the mouse, or Up/Down (W/S) to select a control,
+Left/Right (A/D) to adjust volume, Z/Enter to toggle mute or go back, and Esc to
+return. Changes apply immediately and are saved between launches independently
+of your game save.
+
 ## Tests
 
 ```sh
@@ -29,6 +36,9 @@ Save at the payphone on the Common or the farmhouse door.
 Godot --path game --headless -- --test reach
 # Full Chapter 1 playthrough (auto-mashes accept)
 Godot --path game --headless -- --test
+# Audio settings, menu navigation, mouse controls, and persistence
+# Use a temporary HOME so this test cannot overwrite your own audio settings.
+HOME="$(mktemp -d)" Godot --path game --headless -- --test audio
 # Windowed screenshots of every location to /tmp/shots (add `dbg` for overlays, `title` for title screen)
 Godot --path game -- --shots
 ```
