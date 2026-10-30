@@ -1,4 +1,5 @@
-# Nowhere Near Cambridge
+<img width="1928" height="1083" alt="image" src="https://github.com/user-attachments/assets/dfb96bb8-7c85-4471-b7eb-0633eba701a4" />
+
 
 An exploration-and-mystery RPG set in a semi-fictional Harvard, Massachusetts,
 in October 1995. Explore painted town landmarks, follow a missing person's
