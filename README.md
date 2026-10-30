@@ -11,18 +11,26 @@ One ZIP contains a standalone app for both Apple Silicon and Intel Macs.
 No Godot or Python installation is needed. Requires macOS 13 or later on
 Apple Silicon, or macOS 11 or later on Intel.
 
-To download with macOS's command-line `curl`, verify the checksum, and launch:
+Paste this into Terminal from any directory. It downloads the ZIP to
+`~/Downloads`, verifies its checksum, installs the app to `~/Applications`, and
+launches it:
 
 ```sh
-mkdir -p Nowhere-Near-Cambridge && cd Nowhere-Near-Cambridge &&
-curl --fail --location --remote-name \
-  https://github.com/natefinch/harvard/releases/download/v0.1.0/Nowhere-Near-Cambridge-macOS.zip &&
-curl --fail --location --remote-name \
-  https://github.com/natefinch/harvard/releases/download/v0.1.0/SHA256SUMS &&
-shasum -a 256 -c SHA256SUMS &&
-ditto -x -k Nowhere-Near-Cambridge-macOS.zip . &&
-open "Nowhere Near Cambridge.app"
+(
+  set -e
+  mkdir -p ~/Downloads ~/Applications
+  cd ~/Downloads
+  curl --fail --location -o Nowhere-Near-Cambridge-macOS.zip \
+    https://github.com/natefinch/harvard/releases/download/v0.1.0/Nowhere-Near-Cambridge-macOS.zip
+  curl --fail --location -o Nowhere-Near-Cambridge-SHA256SUMS \
+    https://github.com/natefinch/harvard/releases/download/v0.1.0/SHA256SUMS
+  shasum -a 256 -c Nowhere-Near-Cambridge-SHA256SUMS
+  ditto -x -k Nowhere-Near-Cambridge-macOS.zip ~/Applications
+  open ~/Applications/"Nowhere Near Cambridge.app"
+)
 ```
+
+The surrounding parentheses keep your Terminal in its current directory.
 
 Command-line `curl` normally does not attach the quarantine metadata that
 browsers add to downloaded files. However, **this build is ad-hoc signed, not
