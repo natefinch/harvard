@@ -82,6 +82,10 @@ func _run() -> void:
 	Audio.set_muted("Music", true)
 	var music_bus := AudioServer.get_bus_index("Music")
 	var sfx_bus := AudioServer.get_bus_index("SFX")
+	check(music_bus == 1 and sfx_bus == 2, "Saved layout defines separate Music and SFX buses")
+	check(AudioServer.get_bus_send(music_bus) == "Master" and AudioServer.get_bus_send(sfx_bus) == "Master", "Music and SFX route directly to Master")
+	check(is_equal_approx(AudioServer.get_bus_volume_db(0), 0.0) and not AudioServer.is_bus_mute(0), "Channel settings leave Master unchanged")
+	check(is_equal_approx(AudioServer.get_bus_volume_db(music_bus), -26.0), "SFX volume leaves Music level unchanged")
 	check(AudioServer.is_bus_mute(music_bus), "Music mute reaches bus")
 	check(not AudioServer.is_bus_mute(sfx_bus), "Music mute leaves SFX audible")
 	check(is_equal_approx(AudioServer.get_bus_volume_db(sfx_bus), -14.0), "SFX level reaches bus as dB curve")
@@ -109,6 +113,11 @@ func _run() -> void:
 	check(not Audio.muted.SFX, "Zero slider doesn't overwrite mute toggle")
 	Audio.set_volume("SFX", 0.65)
 	check(not AudioServer.is_bus_mute(sfx_bus), "Raising slider restores unmuted audio")
+	Audio.set_muted("Music", false)
+	Audio.set_muted("SFX", true)
+	check(not AudioServer.is_bus_mute(music_bus), "SFX mute leaves Music audible")
+	Audio.set_muted("SFX", false)
+	Audio.set_muted("Music", true)
 
 	Game.new_game()
 	Game.location = "farm"
@@ -122,6 +131,7 @@ func _run() -> void:
 	if title_list == null:
 		get_tree().quit(1)
 		return
+	check(title_list._labels[0].text.begins_with("> "), "Selected menu item uses a visible ASCII cursor")
 	title_list.index = title_list.options.find("Settings")
 	await key("accept")
 	var panel := menu()

@@ -49,6 +49,9 @@ Godot --path game -- --shots
 - `scripts/Locs.gd` – per-location geometry, exits, hotspots, NPCs, foes
 - `scripts/Story.gd` – all dialogue and events (`ev_<name>`, `enter_<loc>`)
 - `scripts/Location.gd`, `Overland.gd`, `Battle.gd`, `UI.gd`, `Game.gd` – engine
+- `default_bus_layout.tres` – Music and SFX route independently to Master.
+  Keep this saved layout rather than adding buses at runtime, which can
+  scramble bus order in Godot's web sample playback.
 - `assets/` – generated art, music (`game-art/audio/compose.py`), sfx (`game-art/audio/sfx.py`), map (`game-art/map/render_map.py`)
 
 See `STORY.md` for the story bible.

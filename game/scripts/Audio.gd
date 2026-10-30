@@ -14,10 +14,6 @@ var _cache := {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for channel in CHANNELS:
-		if AudioServer.get_bus_index(channel) == -1:
-			AudioServer.add_bus()
-			AudioServer.set_bus_name(AudioServer.bus_count - 1, channel)
 	load_settings()
 	for i in 2:
 		var p := AudioStreamPlayer.new()

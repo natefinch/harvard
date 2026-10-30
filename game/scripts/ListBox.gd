@@ -34,7 +34,7 @@ func _init(opts: Array, can_cancel := true, cols := 1, dis: Array = []) -> void:
 
 func _refresh() -> void:
 	for i in _labels.size():
-		var pre := "▶ " if i == index else "   "
+		var pre := "> " if i == index else "  "
 		_labels[i].text = pre + str(options[i])
 		var c := Color(1, 0.93, 0.6) if i == index else Color(0.93, 0.92, 0.88)
 		if disabled.size() > i and disabled[i]:
