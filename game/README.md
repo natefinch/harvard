@@ -85,7 +85,8 @@ signing limitations.
 The **Web** export preset produces a static site suitable for GitHub Pages.
 It uses the Compatibility renderer and disables threads and extensions, so it
 does not require special cross-origin isolation headers. The desktop builds
-are unchanged.
+are unchanged. The web loading screen uses `assets/ui/title.png` as its splash
+image and retains Godot's loading progress bar.
 
 Install Godot 4.7.2's matching Web export templates using **Editor > Manage
 Export Templates**. From the repository root:
