@@ -4,3 +4,4 @@ game/.godot/
 *.sf2
 .DS_Store
 __pycache__/
+build/
