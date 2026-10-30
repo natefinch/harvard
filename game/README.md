@@ -43,24 +43,26 @@ Godot --path game -- --shots
 
 See `STORY.md` for the story bible.
 
-## Standalone macOS build
+## Standalone release builds
 
-Requires Godot 4.7.2, its matching export templates, and macOS's `codesign`
-command (provided by the Xcode Command Line Tools). In Godot, install templates
-from **Editor > Manage Export Templates**. Then, from the repository root:
+Requires Godot 4.7.2, its matching macOS and Windows export templates (install
+from **Editor > Manage Export Templates**), and macOS's `codesign` and `zip`
+commands. From the repository root:
 
 ```sh
-bash game-art/tools/build-macos.sh
+bash game-art/tools/build-release.sh
 ```
 
 Set `GODOT_BIN` if Godot is installed somewhere other than
 `/Applications/Godot.app/Contents/MacOS/Godot`.
 
-The output is `build/Nowhere-Near-Cambridge-macOS.zip` with a SHA-256 checksum
-in `build/SHA256SUMS`. The archive contains a self-contained `.app`, including
-the game engine and assets, for both Apple Silicon and Intel Macs. Players do
-not need Godot or Python installed. The export template requires macOS 13 or
-later on Apple Silicon, or macOS 11 or later on Intel.
+Outputs in `build/`, with SHA-256 checksums in `build/SHA256SUMS`:
 
-See the [repository README](../README.md#download-and-play-on-macos) for the
-public release download, `curl` commands, and signing limitations.
+- `Nowhere-Near-Cambridge-macOS.zip`: a self-contained, ad-hoc signed `.app`
+  universal binary for Apple Silicon (macOS 13+) and Intel (macOS 11+).
+- `Nowhere-Near-Cambridge-Windows-x86_64.zip`: a single unsigned
+  `Nowhere Near Cambridge.exe` for 64-bit Windows, with the game data embedded.
+
+Players do not need Godot or Python installed. See the
+[repository README](../README.md) for release downloads, install commands, and
+signing limitations.
